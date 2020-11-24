@@ -1,0 +1,51 @@
+
+
+add_action('template_redirect','marketo_redirect_download');
+	function marketo_redirect_download() {
+		if (isset($_REQUEST['aliId'])) {
+			header("HTTP/1.1 301 Moved Permanently");
+			header("Location: /download/thank-you/?doc=" . $_REQUEST['doc']);
+			exit();
+		}
+	}
+
+add_action('init','marketo_form_download');
+	function marketo_form_download() {
+
+		if (preg_match('#/download/thank-you#', $_SERVER['REQUEST_URI']) &&
+			isset($_REQUEST['doc'])) {
+			header('Refresh: 1;url=/download/thank-you/?file=' . $_REQUEST['doc']);
+			exit();
+		}
+
+
+
+
+		if (isset($_REQUEST['file'])) {
+			$args = array(
+				'p'         => $_REQUEST['file'],
+				'post_type' => 'case_studies'
+			);
+			$post = new WP_Query($args);
+			$meta = get_post_meta($post->post->ID);
+			$file = get_attached_file($meta['pdf_file'][0]);
+			$file = preg_replace('#/app/#', '', $file);
+
+			header("Pragma: public");
+			header("Expires: 0");
+			header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+
+			header('Content-Description: File Transfer');
+			header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+			header('Content-Disposition: attachment; filename='.$file.'');
+			header('Content-Length: ' . filesize($file));
+
+			 readfile($file);
+			 // exit();
+		}
+	}
+
+
+// case_studies.php
+
+<a class="callto anim button" target="_blank" href="/download?doc=<?php echo get_the_ID(); ?>">Download <i class="fa fa-long-arrow-right" aria-hidden="true"></i></a>
